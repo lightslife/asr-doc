@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #! -*- coding=utf-8 -*-
 
-#模拟两个正态分布的均值估计
+#模拟两个高斯分布的均值和方差估计
 
 from numpy import *
 import numpy as np
@@ -9,55 +9,56 @@ import random
 import copy
 import matplotlib.pyplot as plt
 import math
-SIGMA1 = 4
-SIGMA2 = 6
-EPS = 0.0001
+
+
+
 #生成方差相同,均值不同的样本
 def generate_data():
     Miu1 = 20
     Miu2 = 40
+    SIGMA1 = 4
+    SIGMA2 = 6
     N = 10000
     X = mat(zeros((N,1)))
     for i in range(N):
         temp = random.uniform(0,1)
-        if(temp > 0.5):
+        if(temp > 0.6): #对应每个高斯权重不一样
             X[i] = random.gauss(Miu1,SIGMA1)
         else:
             X[i] = random.gauss(Miu2,SIGMA2)
     plt.hist(X,bins=100)
-#     plt.plot(X)
-#     plt.show();
+    plt.show()
     return X
 
-
+#KMeans算法 初始化EM算法均值和方差
+def my_KEMANS(X,k ):
+    #TODO
+    return X;
 
 #EM算法
 def my_EM(X):
+    EPS = 0.0001
     k = 2
     N = len(X)
-#     SIGMA=6
-    Miu = [20,50];
-    SIGMA = [4.0,6.0];
-    alpha =[0.5,0.5];
-    print (Miu,SIGMA)
 
+ #EM算法对初始值很敏感，收敛速度迭代次数差别很大
+    Miu = [10,20];
+    SIGMA = [5,5];
+    alpha =[1/k for i in range (k)];
+
+    Posterior = mat(zeros((N,2)))
     dominator = 0
     numerator = 0
     #先求后验概率
     for iter in range(1000):
         for i in range(N):
             dominator = 0
-            Posterior = mat(zeros((N,2)))
+
             for j in range(k):
                 dominator = dominator + alpha[j]* 1.0/SIGMA[j]* np.exp(-1.0/(2.0*SIGMA[j]**2) * (X[i] - Miu[j])**2)
-#                #print dominator,-1/(2*SIGMA**2) * (X[i] - Miu[j])**2,2*SIGMA**2,(X[i] - Miu[j])**2
-                # print (dominator)
             for j in range(k):
                 numerator = alpha[j]*1.0/SIGMA[j]* np.exp(-1.0/(2.0*SIGMA[j]**2) * (X[i] - Miu[j])**2)
-                # print("type num"+str(type(numerator))+ str(type(dominator))+str(type(Posterior[i,j])))
                 Posterior[i,j] = 1.0*numerator/dominator
-                # print (numerator,dominator,numerator/dominator)
-                # print (dominator)
         oldMiu = copy.deepcopy(Miu)
         #最大化
         for j in range(k):
@@ -69,27 +70,18 @@ def my_EM(X):
                 acc_x2 = acc_x2 + Posterior[i,j] * X[i]**2
                 dominator = dominator + Posterior[i,j]
             Miu[j] = acc_x/dominator
-            print("acc",acc_x,acc_x2,dominator);
-            sq=(acc_x2-2*acc_x*Miu[j])/dominator+Miu[j]**2
-            print("sq",sq)
-            SIGMA[j] = math.sqrt(sq)
-#             print ((abs(Miu - oldMiu)).sum())
+            alpha[j]=dominator/N;
+            sigma2=(acc_x2-2*acc_x*Miu[j])/dominator+Miu[j]**2
+            SIGMA[j] = math.sqrt(sigma2)
+            print ("miu sigma iter=",Miu,SIGMA,iter)
+            sub = [Miu[i] - oldMiu[i] for i in range(len(Miu))]
+            dis=[abs(sub[i]) for i in range (len(sub))]
+        if (np.sum(dis)< EPS):
             print (Miu,SIGMA,iter)
-            print ('test \n')
-            c = [Miu[i] - oldMiu[i] for i in range(len(Miu))]
-            d=[abs(c[i]) for i in range (len(c))]
-        if (np.sum(d)< EPS):
-            print (Miu,iter)
-            print ("sigma is ")
-            print (SIGMA)
             break
 
 if __name__ == '__main__':
     X = generate_data()
     my_EM(X)
 
-# ---------------------
-# 作者：11721206
-# 来源：CSDN
-# 原文：https://blog.csdn.net/u010866505/article/details/77877345
-# 版权声明：本文为博主原创文章，转载请附上博文链接！
+ 
