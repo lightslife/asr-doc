@@ -1,0 +1,50 @@
+#! /usr/bin/env python
+#! -*- coding=utf-8 -*-
+
+
+from numpy import *
+import numpy as np
+import random
+import copy
+import matplotlib.pyplot as plt
+import math
+
+def Forword():
+
+    N=3
+    M=4
+    T=5
+
+    O=np.random.randint(0,M,T)
+    print(O)
+    # [2 2 0 2 1]
+    b=np.random.random((N,M))
+    b/=np.array(b.sum(axis=1, keepdims=True))
+    print(b)
+    print("test",b.sum(axis=1))
+    # [1. 1. 1.]
+    ob=np.zeros((T,N))
+    for t in range(T):
+        for i in range(N):
+            ob[t,i]=b[i,O[t]]
+    print(ob)
+
+    a=np.random.random((N,N))
+    a/=np.array([a.sum(axis=-1)]).T
+    print(a)
+    print(a.sum(axis=1))
+
+    pi=np.random.random(N)
+    pi/=pi.sum()
+    print("pi",pi)
+
+    hmm=(O,pi,a,b,N,M,T)
+    print("hmm",hmm)
+    
+    import pickle
+    with open('../hmm.pkl','wb') as f:
+        pickle.dump(hmm,f,pickle.HIGHEST_PROTOCOL)
+
+if __name__ == '__main__':
+    Forword();
+
