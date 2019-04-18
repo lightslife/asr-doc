@@ -9,7 +9,72 @@ import copy
 import matplotlib.pyplot as plt
 import math
 
-def Forword():
+
+def forward(O,pi,a,b,N,M,T):
+    fwd=np.zeros((T,N))
+
+    #初始化
+    for i in range(N):
+        fwd[0,i]=pi[i]*b[i,O[0]]
+
+    #递推
+    for t in range(T-1):
+        for j in range(N):
+            s=0
+            for i in range(N):
+                s+=fwd[t,i]*a[i,j]
+            fwd[t+1,j]=s*b[j,O[t+1]]
+
+    return fwd
+
+def viterbi(O,pi,a,b,N,M,T):
+    d=np.zeros((T,N))
+    ph=np.zeros((T,N),dtype=np.int)
+
+    #初始化
+    for i in range(N):
+        d[0,i]=pi[i]*b[i,O[0]]
+        ph[0,i]=0
+
+    #递推
+    for t in range(1,T):
+        for j in range(N):
+            m=np.zeros(N)
+            for i in range(N):
+                m[i]=d[t-1,i]*a[i,j]
+            ph[t,j]=m.argmax()
+            d[t,j]=m.max()*b[j,O[t]]
+
+    #结束时刻
+    m=np.zeros(N)
+    for i in range(N):
+        m[i]=d[T-1,i]
+    Pv=m.max()
+
+    #back-tracking
+    Q=np.zeros(T,dtype=np.int)
+    Q[T-1]=m.argmax()
+    for t in reversed(range(T-1)):
+        Q[t]=ph[t+1,Q[t+1]]
+
+    return Q
+
+def backward(O,pi,a,b,N,M,T):
+    bk=np.zeros((T,N))
+    #初始化
+    for i in range(N):
+        bk[T-1,i]=1
+    #推导:
+    for t in reversed(range(T-1)):
+        for i in range(N):
+            s=0
+            for j in range(N):
+                s+=a[i,j]*b[j,O[t+1]]*bk[t+1,j]
+            bk[t,i]=s
+    return bk
+
+
+def genData():
 
     N=3
     M=4
@@ -40,11 +105,18 @@ def Forword():
 
     hmm=(O,pi,a,b,N,M,T)
     print("hmm",hmm)
-    
+
     import pickle
     with open('../hmm.pkl','wb') as f:
         pickle.dump(hmm,f,pickle.HIGHEST_PROTOCOL)
 
+    print("foward hmm",forward(*hmm))
+    print("viterbi",viterbi(*hmm))
+    print("backward",backward(*hmm))
+
+
+
 if __name__ == '__main__':
-    Forword();
+    genData();
+
 
